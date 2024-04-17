@@ -1,0 +1,27 @@
+
+\begin{table*}[t!]
+    \centering\footnotesize
+    \scalebox{.832}{
+    \begin{tabular}{l|cc|c|cc|cc|c|cc}
+    \toprule
+      \hspace{5.5mm}\multirow{4}{*}{\textbf{Model}} & \multicolumn{5}{c|}{{\cellcolor[gray]{.95}} \textbf{Sentiment to Unlearn:} \textsc{Negative} } & \multicolumn{5}{c}{{\cellcolor[gray]{.95}}\textbf{Sentiment to Unlearn:} \textsc{Positive} } \\ \cmidrule{2-11}
+        &\multicolumn{2}{c|}{\textbf{\% Positive} ($\uparrow$)} & \textbf{Fluency} ($\downarrow$) & \multicolumn{2}{c|}{\textbf{Diversity} ($\uparrow$)} &\multicolumn{2}{c|}{\textbf{\% Positive} ($\downarrow$)} & \textbf{Fluency} ($\downarrow$) & \multicolumn{2}{c}{\textbf{Diversity} ($\uparrow$)}\\
+        & negative & neutral & \multirow{2}{*}{output ppl} & \multirow{2}{*}{dist-2} & \multirow{2}{*}{dist-3} & positive & neutral & \multirow{2}{*}{output ppl} & \multirow{2}{*}{dist-2} & \multirow{2}{*}{dist-3} \\
+         & prompt & prompt &  &  & & prompt & prompt &  &  &  \\\midrule
+        GPT2 \cite{radford2019language} & \phantom{0}0.00 & 50.02 & 11.42 & 0.85 & 0.85 & 99.08 & 50.02 & 11.42 & 0.84 & 0.84 \\
+        \midrule
+        PPLM \cite{Dathathri2020PPLM} & \phantom{0}8.72 & 52.68 & 142.1 & 0.86 & 0.85 & 89.74 & 39.05 & 181.7 & 0.87 & 0.86 \\
+        CTRL \cite{CTRL2019} & 18.88 & 61.81 & 43.79 & 0.83 & 0.86 & 79.05 & 37.63 & 35.94 & 0.83 & 0.86 \\
+        GeDi \cite{krause-etal-2021-gedi-generative} & 26.80 & 86.01 & 58.41 & 0.80 & 0.79 & 39.57 & \phantom{0}8.73 & 84.11 & 0.84 & 0.82 \\
+        \dexpert \cite{liu-etal-2021-dexperts} & 36.42 & 94.46 & 25.83 & 0.84 & 0.84 & 35.99 & \phantom{0}3.77 & 45.91 & 0.84 & 0.83 \\
+        DAPT \cite{gururangan-etal-2020-dapt} & 14.17 & 77.24 & 30.52 & 0.83 & 0.84 & 87.43 & 33.28 & 32.86 & 0.85 & 0.84 \\
+        PPO \cite{NEURIPS2020_1f89885d} & 43.13 & 94.10 & 15.16 & 0.80 & 0.84 & 32.22 & 3.65 & 15.54 & 0.81 & 0.84\\
+        \midrule
+        \methodnameshort & \textbf{46.55} & \textbf{95.00} & \textbf{14.54} & 0.80 & 0.84 & \textbf{27.50} & \textbf{2.75} & \textbf{14.72} & 0.80 & 0.84\\
+    \bottomrule
+    \end{tabular}}
+    \caption{Automatic evaluation results of unlearning sentiment experiments. Baseline results (except PPO) are from \cite{liu-etal-2021-dexperts}.}
+    \label{tab:sentiment_results}
+\end{table*}
+
+
