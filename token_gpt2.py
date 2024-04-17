@@ -135,7 +135,7 @@ class Distill_Tuning(torch.nn.Module):
         # self.prompt_encoder_neg = self.prompt_encoder_neg.to(self.args.device)
         self.fc_loss = CrossEntropyLoss(reduction='none')
         # self.classifier = Classifier(param)
-        self.scorer = Scorer(param)
+        self.scorer = Scorer(args.reward_model,param)
         self.kl_dropout = nn.Dropout(p=0.5)
         ### load discriminator
         # if self.args.disc_embedding_checkpoint != None:

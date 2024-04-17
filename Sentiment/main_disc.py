@@ -5,8 +5,13 @@ import argparse
 import random
 import numpy as np
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
+
 
 from datetime import datetime
 from tqdm import tqdm
@@ -35,7 +40,7 @@ def construct_generation_args():
     # pre-parsing args
     parser.add_argument("--model_name_or_path", type=str, default='/home/lwd/gpt2-base')
 
-    parser.add_argument("--data_path", type=str, default='data/pos_neg')
+    parser.add_argument("--data_path", type=str, default='/home/lwd/quark-publish/Sentiment/data/pos_neg')
 
     parser.add_argument("--embedding_checkpoint", type=str, default=None)
     parser.add_argument("--task_name", type=str, default="sentiment", choices=["detoxic", "sentiment"])
@@ -107,14 +112,14 @@ def construct_generation_args():
     return args
 
 class Scorer():
-    def __init__(self,device):
+    def __init__(self,path,device):
         n_args = construct_generation_args()
         n_args.device = device
         self.args = n_args
         self.label_token = {"positive": 'good', "negative": 'bad'}
         self.model = PTuneForLAMA(n_args, n_args.template, label_token=self.label_token)
-        # ckpt = torch.load('/home/lwd/quark/Sentiment/checkpoint/fudge/disc_tuning_positive_temperature0.01_scope_50_epoch_5_f1_0.88_(2,2).ckpt')['embedding']
-        ckpt = torch.load('/home/lwd/quark/Sentiment/checkpoint/train-in-fudge-way/disc_tuning_positive_temperature0.01_scope_50_epoch_2_f1_0.85_(2,2).ckpt')['embedding']
+        ckpt = torch.load(path)['embedding']
+        # ckpt = torch.load('/home/lwd/quark/Sentiment/checkpoint/train-in-fudge-way/disc_tuning_positive_temperature0.01_scope_50_epoch_2_f1_0.85_(2,2).ckpt')['embedding']
         self.model.load_state_dict(ckpt)
         self.tokenizer = self.model.tokenizer
 
