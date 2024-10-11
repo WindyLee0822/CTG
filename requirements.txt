@@ -1,0 +1,4 @@
+torch==2.1.2
+torchaudio==2.0.2+cu118
+torchvision==0.15.2+cu118
+transformers==4.39.3
