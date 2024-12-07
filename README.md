@@ -1,25 +1,23 @@
-# CTG
+# TOLE: Reinforcement Learning with Token-level Feedback for Controllable Text Generation
 
 Source code of “Reinforcement Learning with Token-level Feedback for Controllable Text Generation (NAACL 2024)”
 
 If you encounter problems, feel free to contact me (wendili@hust.edu.cn).
 
-Currently, codes of sentiment transformation experiments have been published. 
-Next, I will try to sort out codes of double-aspect CTG as soon as possible.
 
-## Single-attribute Control
+## Multi-attribute Control
 
-- Train a attribute classifier.
+- Train a weigher.
 
-  In sentiment transformation, we retrain a attribute classifier with SST-5. To run the recommendation part.
+  When we have one sentiment scorer and one topic scorer, we need to train a weigher to weight them.
 
-```python Sentiment/main_disc.py```
+```python weigher.py --sent_scorer_path <path of your best sentiment classifier> --topic_scorer_path <path of your best topic classifier>```
 
 - Run Token-level RL
 
   To train a policy model, run
 
-  ```python token_main.py --source_mode neutral --target_mode positive --reward_model {best checkpoint of your classifier} ```
+  ```python token_main.py --sent_reward_model {best checkpoint of your sentiment classifier} --topic_reward_model {best checkpoint of your topic classifier} --weigher_ckpt {final checkpoint of your weigher}```
 
 ## Citation
   If you find our research helpful, please kindly cite our paper!
