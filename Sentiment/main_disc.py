@@ -111,7 +111,7 @@ def construct_generation_args():
 
     return args
 
-class Scorer():
+class Scorer_sent():
     def __init__(self,path,device):
         n_args = construct_generation_args()
         n_args.device = device
@@ -141,7 +141,7 @@ class Scorer_topic():
         self.tokenizer = self.model.tokenizer
 
     def score(self,input_ids):
-        score = self.model._predict_scores(input_ids, input_ids!=self.tokenizer.pad_token_id, reward=True)
+        score = self.model._predict_scores(input_ids, input_ids!=self.tokenizer.pad_token_id, reward=True,specific_label_for_topic=0) # For specific_label_for_topic: 0 is Asian, 1 is American, 2 is Mexico
         return score
 
 class Classifier():
