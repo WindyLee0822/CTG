@@ -22,10 +22,10 @@ BIG_CONST = -1e15
 
 
 class PTuneForLAMA(torch.nn.Module):
-    def __init__(self, args, template, label_token=None):
+    def __init__(self, args, template, label_token=None,label_num=2):
         super().__init__()
         self.args = args
-        self.label_num = 2
+        self.label_num = label_num
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.model_name_or_path)
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
@@ -322,7 +322,7 @@ class PTuneForLAMA(torch.nn.Module):
 
         return raw_embeds
 
-    def _predict_scores(self, x_hs, att_mask, reward=False):
+    def _predict_scores(self, x_hs, att_mask, reward=False,specific_label_for_topic=0):
         bz = len(x_hs)
         # construct query ids
         prompt_tokens = [self.pseudo_token_id]
@@ -357,9 +357,8 @@ class PTuneForLAMA(torch.nn.Module):
             serial_list = [self.label_token_ids['positive'],
                            self.label_token_ids['negative']]
         elif self.label_num == 3:
-            serial_list = [self.label_token_ids['positive'],
-                       self.label_token_ids['negative'],
-                        self.label_token_ids['neutral']]
+            serial_list = [self.label_token_ids['Asian'],
+                        self.label_token_ids['American'],self.label_token_ids['Mexico']]
 
 
         tri_mask = torch.ones_like(logits,dtype=torch.bool)
@@ -379,8 +378,12 @@ class PTuneForLAMA(torch.nn.Module):
 
         else:
             # binary_prob = torch.softmax(binary_prob,dim=-1)
-            tri_prob = torch.softmax(tri_prob[:,serial_list],dim=-1)
-            return tri_prob[:,0]
+            if self.label_num ==2:
+                tri_prob = torch.softmax(tri_prob[:,serial_list],dim=-1)
+                return tri_prob[:,0]
+            elif self.label_num ==3:
+                tri_prob = torch.softmax(tri_prob[:,serial_list],dim=-1)
+                return tri_prob[:,specific_label_for_topic]
 
     def forward(self, x_hs, x_ts, att_mask):
         bz = len(x_hs)
