@@ -126,32 +126,23 @@ class Scorer():
     def score(self,input_ids,mode='positive'):
         score = self.model._predict_scores(input_ids, input_ids!=self.tokenizer.pad_token_id, reward=True)
         return score
-    # def score(self,input_ids,mode='positive'):
-    #     dataset = Classification_Dataset(tokenizer=self.tokenizer, data_dir=input_ids,label_token=self.label_token,max_length=35)
-    #
-    #     data_loader = DataLoader(dataset, self.args.batch_size, shuffle=False)
-    #     input_list,rewards_list=[],[]
-    #     with torch.no_grad():
-    #         self.model.eval()
-    #         for batch in data_loader:
-    #             self.model.eval()
-    #             x = batch[0].to(self.args.device).squeeze(1)
-    #             musk = batch[1].to(self.args.device).long().squeeze(1)
-    #             y = batch[2]
-    #             max_length = musk.sum(1).max()
-    #             scores=torch.zeros_like(x,dtype=torch.float32)
-    #             sen_mask = self.model._predict_scores(x, musk)
-    #             if mode == 'positive':
-    #                 sen_mask = sen_mask == 11274
-    #             else:
-    #                 sen_mask = sen_mask == 14774
-    #             for l in range(max_length):
-    #                 state_score = self.model._predict_scores(x[:,:l+1], musk[:,:l+1], reward=True)
-    #                 scores[:,l] = state_score
-    #             rewards = scores[:,1:] - scores[:,:-1]
-    #             input_list.extend(x.tolist())
-    #             rewards_list.extend(rewards.tolist())
-    #     return input_list,rewards_list,sen_mask
+
+
+class Scorer_topic():
+    def __init__(self,path,device):
+        n_args = construct_generation_args()
+        n_args.device = device
+        self.args = n_args
+        self.label_token = {"Asian": 'Asian', "American": 'American','Mexico':'Mexico'}
+        self.model = PTuneForLAMA(n_args, n_args.template, label_nums=3,label_token=self.label_token)
+        ckpt = torch.load(path)['embedding']
+        # ckpt = torch.load('/home/lwd/quark/data/double/checkpoint/disc_tuning_positive_temperature0.01_scope_50_epoch_7_f1_0.87_(2,2).ckpt')['embedding']
+        self.model.load_state_dict(ckpt)
+        self.tokenizer = self.model.tokenizer
+
+    def score(self,input_ids):
+        score = self.model._predict_scores(input_ids, input_ids!=self.tokenizer.pad_token_id, reward=True)
+        return score
 
 class Classifier():
     def __init__(self,args):
