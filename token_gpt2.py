@@ -31,7 +31,8 @@ from transformers import (
     GPT2Tokenizer)
 
 from transformers import GPT2LMHeadModel, AutoTokenizer, AutoModelForMaskedLM
-from Sentiment.main_disc import Classifier,Scorer
+from Sentiment.main_disc import Scorer_sent,Scorer_topic
+from weigher import Weight_Classifier
 
 def create_model(args):
     if args.model_name_or_path:
@@ -134,21 +135,22 @@ class Distill_Tuning(torch.nn.Module):
         # self.prompt_encoder_neg = PromptEncoder(self.template, self.hidden_size, self.tokenizer, args)
         # self.prompt_encoder_neg = self.prompt_encoder_neg.to(self.args.device)
         self.fc_loss = CrossEntropyLoss(reduction='none')
-        # self.classifier = Classifier(param)
-        self.scorer = Scorer(args.reward_model,param)
+        
         self.kl_dropout = nn.Dropout(p=0.5)
-        ### load discriminator
-        # if self.args.disc_embedding_checkpoint != None:
-        #     self.disc_model = _create_model(self.args.disc_embedding_checkpoint[:-5]).to(self.args.device)
-        #     self.spell_length_disc = sum(self.args.template_disc)
-        #     self.disc_embedding = self.disc_model.get_input_embeddings()
-        #     self.prompt_encoder_disc = PromptEncoder(self.args.template_disc, self.disc_embedding.embedding_dim,
-        #                                              self.tokenizer, args)
-        #     self.prompt_encoder_disc = self.prompt_encoder_disc.to(self.args.device)
-        #     self.prompt_encoder_disc.load_state_dict(self.load_prompt(self.args.disc_embedding_checkpoint))
-        # else:
-        #     self.disc_model = self.model
-        #     self.prompt_encoder_disc = self.prompt_encoder
+
+        self.scorer_sent = Scorer_sent('disc_tuning_positive_temperature0.01_scope_50_epoch_2_f1_0.85_(2,2).ckpt',self.args.device)
+        self.scorer_topic = Scorer_topic('disc_tuning_positive_temperature0.01_scope_50_epoch_7_f1_0.87_(2,2).ckpt',self.args.device)
+
+        # self.scorer_sent.eval()
+        # self.scorer_topic.eval()
+        self.weight_classifier = Weight_Classifier(self.hidden_size, 2)
+        self.weight_classifier.load_state_dict(
+            torch.load('checkpoints/weight_classifier/pos_mexican/model_large_4.pt'))
+            # torch.load('checkpoints/weight_classifier/pos_asian_valid/model_large_3.pt'))
+            # torch.load('checkpoints/weight_classifier/cross_1_2/model_large_3.pt'))
+        self.weight_classifier = self.weight_classifier.cuda()
+
+        
 
     def load_prompt(self, embedding_checkpoint):
         checkpoint = torch.load(embedding_checkpoint)
@@ -275,8 +277,10 @@ class Distill_Tuning(torch.nn.Module):
     #     return reward.view(-1)
 
     def get_q_value(self,text_ids):
-        q=self.scorer.score(text_ids)
-        return q if self.target_mode=='positive' else 1-q
+        score1 = self.scorer_sent.score(text_ids)
+        score2 = self.scorer_topic.score(text_ids)
+        scores = torch.cat([score1[...,None],score2[...,None]],dim=-1)
+        return scores
 
     def sample(self, prompts_ids, max_length, mode='positive', gen=False):
         cur_len = prompts_ids.shape[1]
@@ -370,8 +374,19 @@ class Distill_Tuning(torch.nn.Module):
                        for output in prompts_ids]
 
         if not gen:
-            assert output_ids.shape[-1] == q_storage.shape[-1]
+            assert output_ids.shape[-1] == q_storage.shape[-2]
+            outputs = self.model(inputs_embeds=inputs_embeds,
+                                 attention_mask=attention_mask[:, :inputs_embeds.shape[1]],
+                                 #position_ids=position_ids[:, :inputs_embeds.shape[1]],
+                                 output_hidden_states=True,
+                                 return_dict=True)
+            if mode!=None:
+                weight = self.weight_classifier(outputs.hidden_states[-1][:,self.spell_length:,:])
+            else:
+                weight = self.weight_classifier(outputs.hidden_states[-1])
+            weight = weight[:,1:,:]
             reward = q_storage[:, 1:] - q_storage[:, :-1]
+            reward = (weight * reward).sum(-1)
         else:
             reward = None
         # reward = q_storage[:, -1][..., None].repeat(1, q_storage.shape[-1] - 1)
