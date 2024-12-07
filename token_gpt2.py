@@ -138,14 +138,14 @@ class Distill_Tuning(torch.nn.Module):
         
         self.kl_dropout = nn.Dropout(p=0.5)
 
-        self.scorer_sent = Scorer_sent('disc_tuning_positive_temperature0.01_scope_50_epoch_2_f1_0.85_(2,2).ckpt',self.args.device)
-        self.scorer_topic = Scorer_topic('disc_tuning_positive_temperature0.01_scope_50_epoch_7_f1_0.87_(2,2).ckpt',self.args.device)
+        self.scorer_sent = Scorer_sent(args.sent_reward_model,self.args.device)
+        self.scorer_topic = Scorer_topic(args.topic_reward_model,self.args.device)
 
         # self.scorer_sent.eval()
         # self.scorer_topic.eval()
         self.weight_classifier = Weight_Classifier(self.hidden_size, 2)
         self.weight_classifier.load_state_dict(
-            torch.load('checkpoints/weight_classifier/pos_mexican/model_large_4.pt'))
+            torch.load(args.weigher_ckpt))
             # torch.load('checkpoints/weight_classifier/pos_asian_valid/model_large_3.pt'))
             # torch.load('checkpoints/weight_classifier/cross_1_2/model_large_3.pt'))
         self.weight_classifier = self.weight_classifier.cuda()
