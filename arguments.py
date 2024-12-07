@@ -13,6 +13,7 @@ def get_args():
     parser.add_argument(
         '--sent_reward_model', type=str, default='/home/lwd/quark/Sentiment/checkpoint/fudge/disc_tuning_positive_temperature0.01_scope_50_epoch_5_f1_0.88_(2,2).ckpt')
     parser.add_argument("--topic_reward_model", type=str, default='/home/lwd/quark/data/double/checkpoint/disc_tuning_positive_temperature0.01_scope_50_epoch_7_f1_0.87_(2,2).ckpt')
+    parser.add_argument("--weigher-ckpt", type=str, default='/home/lwd/quark/checkpoints/weight_classifier/pos_mexican/model_large_4.pt')
 
     parser.add_argument(
         '--device', type=str, default='cuda')
