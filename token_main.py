@@ -30,80 +30,20 @@ from Sentiment.main_disc import Classifier
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"))
 log = logging.getLogger(__name__)
 
-# def process_openwebtext_into_train_prompts:
-#     from datasets import load_dataset
-#     dataset = load_dataset('openwebtext')['train'][:50000]
-#     dataset = [i['text'] for i in dataset]
-#     neutral_num,negative_num,positive_num = 10000,10000,10000
-#     model = AutoModelForSequenceClassification.from_pretrained(
-#         'cardiffnlp/twitter-roberta-base-sentiment-latest')
-#     token = AutoTokenizer.from_pretrained('cardiffnlp/twitter-roberta-base-sentiment-latest')
-#     input_ids_list,attention_mask_list=[],[]
-#     for text in dataset:
-#         t = ' '.join(text.split()[:20])
-#         inp = token(t,return_tensors='pt')
-#         input_ids_list.append('inp')
+
 class PromptDataset(Dataset):
-    # def __init__(self, args, mode):
-    #     # self.prompts = [json.loads(s.strip())["prompt"]["text"].strip() for s in open(path, 'r').readlines()][:100]
-    #     num_reference = 2
-    #
-    #     valid_es = []
-    #     train_es = []
-    #     test_es = []
-    #     train_en = []
-    #     valid_en = [[]] * num_reference
-    #     test_en = [[]] * num_reference
-    #
-    #     with open('../NADO/fisher-callhome-corpus/corpus/ldc/fisher_test.es', 'r') as f:
-    #         for line in f:
-    #             test_es.append(line.strip())
-    #
-    #     with open('../NADO/fisher-callhome-corpus/corpus/ldc/fisher_train.es', 'r') as f:
-    #         for line in f:
-    #             train_es.append(line.strip())
-    #
-    #     with open('../NADO/fisher-callhome-corpus/corpus/ldc/fisher_dev.es', 'r') as f:
-    #         for line in f:
-    #             valid_es.append(line.strip())
-    #
-    #     with open('../NADO/fisher-callhome-corpus/corpus/ldc/fisher_train.en', 'r') as f:
-    #         for line in f:
-    #             train_en.append(line.strip())
-    #
-    #     for i in range(num_reference):
-    #         with open('../NADO/fluent-fisher/noids/dev.noid.cleaned_%d' % (i), 'r') as f:
-    #             for line in f:
-    #                 # clean_line = line.strip().split()[1:]
-    #                 # clean_line = " ".join(clean_line)
-    #                 valid_en[i].append(line.strip())
-    #
-    #     for i in range(num_reference):
-    #         with open('../NADO/fluent-fisher/noids/test.noid.cleaned_%d' % (i), 'r') as f:
-    #             for line in f:
-    #                 # clean_line = line.strip().split()[1:]
-    #                 # clean_line = " ".join(clean_line)
-    #                 test_en[i].append(line.strip())
-    #
-    #     if mode=='train':
-    #         self.dataset = [i for i in train_es]
-    #         self.ref = train_en
-    #         self.dataset = self.dataset[:320]
-    #     elif mode =='valid':
-    #         self.dataset = [i for i in valid_es]
-    #         self.ref = valid_en
-    #     else:
-    #         self.dataset = [i for i in test_es]
-    #         self.ref = test_en
     def __init__(self,mode='positive',train=True):
         if train==True:
-            dataset = json.load(open('Sentiment/data/train_prompts_v1.json'))
-            dataset = random.sample(dataset,12000)
+            path = 'data/double/prompt_tokens.txt'
+            with open(path) as f:
+                dataset = f.readlines()
+            dataset = [i.strip() for i in dataset][:5000]
             self.dataset = [i for _ in range(1) for i in dataset]
         else:
-            path = 'Sentiment/data/sentiment_prompts-10k/' + mode + '_prompts.jsonl'
+            path = 'data/double/pre_tokens.txt'
             with open(path) as f:
-                dataset = [json.loads(line)['prompt']['text'] for line in f]
+                dataset=f.readlines()
+            dataset= [i.strip() for i in dataset]
             self.dataset = dataset
 
     def __len__(self):
@@ -111,6 +51,7 @@ class PromptDataset(Dataset):
 
     def __getitem__(self, index):
         return self.dataset[index]
+
 
 
 class PromptCollator(object):
@@ -140,27 +81,7 @@ class SequenceCollator(object):
     def __init__(self, args,tokenizer):
         self.tokenizer = tokenizer
         self.device = args.device
-    # def __call__(self, sequences):
-    #     queries = [sequence['query'] for sequence in sequences]
-    #     responses = [sequence['response'] for sequence in sequences]
-    #     # cat_ids = [self.tokenizer.convert_tokens_to_ids(sequence['cat_tokens']) for sequence in sequences]
-    #
-    #     query_encodings_dict = self.tokenizer(queries, return_tensors="pt", padding=True)
-    #     query_input_ids = query_encodings_dict['input_ids']
-    #     query_mask = query_encodings_dict['attention_mask']
-    #     # query_input_ids = torch.cat([query_input_ids.new(cat_ids)[:, None], query_input_ids], dim=1)
-    #     # query_mask = torch.cat([query_mask.new([1] * len(query_mask))[:, None], query_mask], dim=1)
-    #
-    #     response_encodings_dict = self.tokenizer(responses, return_tensors="pt", padding=True)
-    #     response_input_ids = response_encodings_dict['input_ids']
-    #     response_mask = response_encodings_dict['attention_mask']
-    #
-    #     cat_mask = [sequence['cat_mask'] for sequence in sequences]
-    #     mask_tensor,len_list = self.pad_tensor(cat_mask)
-    #     assert len_list == response_mask.sum(-1).to_list()
-    #
-    #     return query_input_ids, query_mask, response_input_ids, response_mask, mask_tensor
-    #
+    
     def __call__(self,sequences):
         input_ids = torch.tensor([sequence['input_ids'] for sequence in sequences],device=self.device)
         input_mask = input_ids != self.tokenizer.eos_token_id
@@ -201,17 +122,29 @@ class AdaptiveController:
 
 class Evaluation():
     def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained('/home/lwd/distilbert-base-uncased-finetuned-sst-2-english')
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            '/home/lwd/distilbert-base-uncased-finetuned-sst-2-english')
+        self.model_ckpt = [
+        '/home/lwd/quark/checkpoints/sentiment',
+        '/home/lwd/quark/checkpoints/topic'
+         ]
+        self.model = [
+            AutoModelForSequenceClassification.from_pretrained(
+                self.model_ckpt[0]),
+            AutoModelForSequenceClassification.from_pretrained(
+                self.model_ckpt[1])
+        ]
+        self.labels = [1,2]
+        self.tokenizer = AutoTokenizer.from_pretrained('/home/lwd/roberta-base')
 
-    def eval(self,text,target='positive'):
-        inputs = self.tokenizer(text,return_tensors='pt',padding=True,truncation=True)
-        output = self.model(**inputs)
+
+    def eval(self,text,id):
+        # model = AutoModelForSequenceClassification.from_pretrained(self.model_ckpt[id])
+        inputs = self.tokenizer(text,return_tensors='pt',padding=True)
+        output = self.model[id](**inputs)
         predicted_class_id = output.logits.argmax(-1)
-        labels = [self.model.config.id2label[i] for i in predicted_class_id.tolist()]
-        nums = [1 for i in labels if i.lower()==target]
-        return sum(nums),len(labels)
+        # labels = [self.model.config.id2label[i] for i in predicted_class_id.tolist()]
+        nums = [1 for i in predicted_class_id if i.item()==self.labels[id]]
+        # results.append(sum(nums)/len(predicted_class_id))
+        return sum(nums),len(predicted_class_id)
 
     def score(self,text,target='POSITIVE'):
         inputs = self.tokenizer(text, return_tensors='pt', padding=True)
@@ -220,6 +153,8 @@ class Evaluation():
         id = self.model.config.label2id[target]
         scores = output.logits[:,id]
         return scores
+
+
 
 class ConditionTrainer:
     def __init__(self,
@@ -447,20 +382,19 @@ class ConditionTrainer:
         self.optimizer.load_state_dict(load_dic['optimizer'])
         self.scheduler.load_state_dict(load_dic['scheduler'])
         log.info(f"Load Model Successfully from {load_dir}")
-
     def eval(self, step):
         if  step % self.params.eval_interval != 0:
             return
         self.policy.model.eval()
         log.info(f"[step {step}] evaluating ...")
         generations, perplexities, toxicities = [], [], []
-        correct,count = 0,0
+        correct1,sum1,correct2,sum2 = 0,0,0,0
         for i, (input_ids, attention_mask) in enumerate(tqdm(self.val_dataloader)):
             with torch.no_grad():
                 input_ids = input_ids.to(self.params.device)
                 attention_mask = attention_mask.to(self.params.device)
                 # input_ids, attention_mask = self.add_control_code(input_ids, attention_mask)
-                rollouts = self.policy.sample(prompts_ids=input_ids,max_length=20 + self.params.max_prompt_length,mode='positive',gen=True)
+                rollouts = self.policy.sample(prompts_ids=input_ids,max_length=64 + self.params.max_prompt_length,mode='positive',gen=True)
                 cur_cast_mask = torch.ones_like(rollouts['input_ids'])[:,:-1]
                 forward_inputs = {'x_hs':rollouts['input_ids'],
                                   'att_mask':rollouts['input_ids']!=self.policy.tokenizer.pad_token_id,
@@ -468,41 +402,38 @@ class ConditionTrainer:
                                   'reward_mask':cur_cast_mask}
                 outputs = self.policy.forward_pass(**forward_inputs,mode='positive',gen=True)
                 ref_logprobs = outputs['logprob']
-                ## prompt = self.decode(rollouts['query/input_ids'][:, 1:])
-                # response = rollouts['response/text']
-                # score = self.score_model.get_reward(prompt, response, f'step{step}_eval{i}')
-                # toxicity = [reward_to_toxicity(x) for x in score if x is not None]
-                # toxicities.extend(toxicity)
+                perplexity = -1. * reduce_sum(ref_logprobs, outputs['kl_mask'].float(), axis=1)
+                perplexities.extend(perplexity.cpu().detach().numpy().tolist())
+
+                x1,x2 = self.classifier.eval(rollouts['text'],0)
+                correct1+=x1
+                sum1+=x2
+                x1, x2 = self.classifier.eval(rollouts['text'], 1)
+                correct2 += x1
+                sum2 += x2
                 generations.extend(rollouts['text'])
 
-                x1,x2 = self.classifier.eval(rollouts['text'],target=self.params.target_mode)
-                correct += x1
-                count += x2
-
-        correctness = correct/count
+        # correctness = [1 if i['label']=='POSITIVE' else 0 for i in classification]
+        # correctness = sum(correctness)/len(correctness)
+        ppl_score = np.mean(perplexities)
 
         dist_1, dist_2, dist_3, dist_4 = distinctness(generations)
         log.info('*******************************')
-        log.info(f"  correctness = {correctness:+.4f}")
+        log.info(f"  perplexity = {ppl_score:+.2f}")
+        log.info(f"  correctness = {correct1/sum1:+.4f}-{correct2/sum2:+.4f}")
         log.info(f'dist-1={dist_1:.3f}, dist-2={dist_2:.3f}, dist-3={dist_3:.3f}, dist-4={dist_4:.3f}')
         log.info('***example***')
         log.info(generations[-1])
-        log.info(generations[-2])
-        log.info(generations[-3])
-        log.info(generations[-4])
-        log.info(generations[-5])
-        log.info(generations[-6])
+        log.info(generations[1])
         log.info('******************************')
 
-        result = f"cor={correctness:+.3f}+step={step}+dist={dist_1:.3f}-{dist_2:.3f}-{dist_3:.3f}-{dist_4:.3f}"
+        self.step_result.append((step,correct1/sum1,correct2/sum2,ppl_score,dist_2,dist_4))
+        result = f"cor={correct1/sum1:+.3f}-{correct2/sum2:+.3f}+step={step}+dist={dist_1:.3f}-{dist_2:.3f}-{dist_3:.3f}-{dist_4:.3f}+ppl={ppl_score:.3f}"
         # if correctness > self.best_correctness:
         self.save(result)
-        self.best_correctness = correctness
-        # self.writer.add_scalar('Evaluation/perplexity', ppl_score, step)
-        # self.writer.add_scalar('Evaluation/toxicity', toxicity_score, step)
-        # self.writer.add_scalar('Evaluation/Dist-1', dist_1, step)
-        # self.writer.add_scalar('Evaluation/Dist-2', dist_2, step)
-        # self.writer.add_scalar('Evaluation/Dist-3', dist_3, step)
+        self.best_correctness = correct1/sum1 + correct2/sum2
+
+    
 
 
 
