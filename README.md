@@ -2,10 +2,13 @@
 
 Source code of “Reinforcement Learning with Token-level Feedback for Controllable Text Generation (NAACL 2024)”
 
-If you encounter problems, feel free to contact me (wendili@hust.edu.cn).
+Codes of single-attribute control (sentiment transformation) experiments are at `main` branch.
 
-Currently, codes of sentiment transformation experiments have been published. 
-Next, I will try to sort out codes of double-aspect CTG as soon as possible.
+Codes of multi-attribute control experiments are at `multi-attribute` branch.
+
+The codes are a little messy currently, I will try to sort them out as soon as possible. 
+
+If you encounter problems, feel free to contact me (wendili@hust.edu.cn).
 
 ## Single-attribute Control
 
