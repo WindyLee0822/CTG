@@ -11,7 +11,9 @@ def get_args():
     parser.add_argument(
         '--model_name_or_path', type=str, default='/home/lwd/gpt2-large')
     parser.add_argument(
-        '--reward_model', type=str, default='/home/lwd/quark/Sentiment/checkpoint/fudge/disc_tuning_positive_temperature0.01_scope_50_epoch_5_f1_0.88_(2,2).ckpt')
+        '--sent_reward_model', type=str, default='/home/lwd/quark/Sentiment/checkpoint/fudge/disc_tuning_positive_temperature0.01_scope_50_epoch_5_f1_0.88_(2,2).ckpt')
+    parser.add_argument("--topic_reward_model", type=str, default='/home/lwd/quark/data/double/checkpoint/disc_tuning_positive_temperature0.01_scope_50_epoch_7_f1_0.87_(2,2).ckpt')
+
     parser.add_argument(
         '--device', type=str, default='cuda')
     parser.add_argument("--pseudo_token", type=str, default='xxx')
