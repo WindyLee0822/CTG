@@ -11,7 +11,7 @@ If you encounter problems, feel free to contact me (wendili@hust.edu.cn).
 
   When we have one sentiment scorer and one topic scorer, we need to train a weigher to weight them.
 
-```python weigher.py --sent_scorer_path <path of your best sentiment classifier> --topic_scorer_path <path of your best topic classifier>```
+  ```python weigher.py --sent_scorer_path <path of your best sentiment classifier> --topic_scorer_path <path of your best topic classifier>```
 
 - Run Token-level RL
 
