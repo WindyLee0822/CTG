@@ -12,11 +12,11 @@ If you encounter problems, feel free to contact me (wendili@hust.edu.cn).
 
 ## Single-attribute Control
 
-- Train a attribute classifier.
+- Train an attribute classifier.
 
   In sentiment transformation, we retrain a attribute classifier with SST-5. To run the recommendation part.
 
-```python Sentiment/main_disc.py```
+  ```python Sentiment/main_disc.py```
 
 - Run Token-level RL
 
