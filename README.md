@@ -1,4 +1,4 @@
-# Reinforcement Learning with Token-level Feedback for Controllable Text Generation
+# TOLE: Reinforcement Learning with Token-level Feedback for Controllable Text Generation
 
 Source code of “Reinforcement Learning with Token-level Feedback for Controllable Text Generation (NAACL 2024)”
 
